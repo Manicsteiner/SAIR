@@ -1,7 +1,15 @@
 @file:Suppress("DEPRECATION")
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
+}
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(localPropertiesFile.inputStream())
+    }
 }
 
 android {
@@ -14,7 +22,7 @@ android {
         //noinspection OldTargetApi
         targetSdk = 34
         versionCode = 65
-        versionName = "5.0"
+        versionName = "4.10"
         resourceConfigurations += setOf("zh-rCN", "zh-rTW")
         javaCompileOptions {
             annotationProcessorOptions {
@@ -29,13 +37,16 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: ""
-            keyPassword = System.getenv("RELEASE_KEY_PWD") ?: ""
-            storeFile = file("../keystore.jks")
-            storePassword = System.getenv("RELEASE_KEY_STORE_PWD") ?: ""
-            enableV1Signing = false
-            enableV2Signing = true
-            enableV3Signing = true
+            val storeFilePath = localProperties.getProperty("KEYSTORE_PATH", "")
+            if (storeFilePath.isNotEmpty()) {
+                storeFile = file(storeFilePath)
+                keyAlias = localProperties.getProperty("KEY_ALIAS", "")
+                keyPassword = localProperties.getProperty("KEY_PASSWORD", "")
+                storePassword = localProperties.getProperty("KEYSTORE_PASSWORD", "")
+                enableV1Signing = false
+                enableV2Signing = true
+                enableV3Signing = true
+            }
         }
     }
 
